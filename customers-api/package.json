@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "migrate": "node ./db/migrate.js",
-    "seed": "node ./db/seed.js"
+    "dev": "nodemon src/index.js"
   },
   "dependencies": {
     "dotenv": "^16.6.1",
