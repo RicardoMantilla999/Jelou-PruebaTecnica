@@ -1,0 +1,69 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: jelou-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: jelou_test
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      # Esto carga schema.sql y seed.sql automáticamente al iniciar 
+      - ./db:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/mysql
+    networks:
+      - jelou-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  customers-api:
+    build: 
+      context: ./customers-api
+      dockerfile: Dockerfile
+    container_name: customers-api
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASS=password
+      - DB_NAME=jelou_test
+      - PORT=3001
+      - SERVICE_TOKEN=super-secret-internal-token
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - jelou-net
+
+  orders-api:
+    build:
+      context: ./orders-api
+      dockerfile: Dockerfile
+    container_name: orders-api
+    ports:
+      - "3002:3002"
+    environment:
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASS=password
+      - DB_NAME=jelou_test
+      - PORT=3002
+      - CUSTOMERS_API_URL=http://customers-api:3001
+      - SERVICE_TOKEN=super-secret-internal-token
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - jelou-net
+
+networks:
+  jelou-net:
+    driver: bridge
+
+volumes:
+  db_data:

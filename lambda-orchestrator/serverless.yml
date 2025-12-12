@@ -1,0 +1,29 @@
+service: jelou-order-orchestrator
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+custom:
+  serverless-offline:
+    host: 0.0.0.0
+    httpPort: 3000
+provider:
+  name: aws
+  runtime: nodejs20.x 
+  region: us-east-1
+  stage: dev
+  environment:
+    CUSTOMERS_API_BASE: ${env:CUSTOMERS_API_URL}
+    ORDERS_API_BASE: ${env:ORDERS_API_URL}
+    SERVICE_TOKEN: ${env:SERVICE_TOKEN}
+
+functions:
+  orchestrateOrder:
+    handler: src/handler.handler
+    events:
+      - http:
+          path: orders/process
+          method: post
+          cors: true
