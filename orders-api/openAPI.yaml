@@ -1,0 +1,96 @@
+openapi: 3.0.0
+info:
+  title: Orders API
+  version: 1.0.0
+  description: API para gestión de Productos y Órdenes.
+servers:
+  - [cite_start]url: http://localhost:3002
+
+paths:
+  /products:
+    post:
+      summary: Crear Producto
+      description: Crea un nuevo producto y su stock inicial.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sku, name, price_cents, stock]
+              properties:
+                [cite_start]sku: { type: string, example: "PROD-A1" }
+                name: { type: string }
+                [cite_start]price_cents: { type: integer }
+                [cite_start]stock: { type: integer }
+      responses: { '201': { description: Producto creado. [cite_start]} }
+      
+  /orders:
+    post:
+      summary: Crear Orden
+      description: Crea la orden en estado CREATED, valida cliente y stock, y descuenta stock. (Transacción)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer_id, items]
+              properties:
+                [cite_start]customer_id: { type: integer }
+                items: 
+                  type: array
+                  items:
+                    type: object
+                    required: [product_id, qty]
+                    properties:
+                      [cite_start]product_id: { type: integer }
+                      [cite_start]qty: { type: integer }
+      responses:
+        '201': { description: Orden creada. }
+        '400': { description: Stock insuficiente o Cliente inválido. [cite_start]}
+
+  /orders/{id}/confirm:
+    post:
+      summary: Confirmar Orden (Idempotente)
+      description: Cambia el estado de la orden a CONFIRMED. Protegido por X-Idempotency-Key.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: header
+          [cite_start]name: X-Idempotency-Key # Clave de idempotencia requerida 
+          required: true
+          schema: { type: string }
+      security:
+        - BearerAuth: []
+      responses:
+        '200': { description: Orden confirmada o respuesta guardada devuelta (idempotencia). [cite_start]}
+        '409': { description: Conflicto: Ya existe una orden en estado CONFIRMED. }
+
+  /orders/{id}/cancel:
+    post:
+      summary: Cancelar Orden y Restaurar Stock (Compensación)
+      description: Cancela una orden y restaura el stock. Usado para compensación de fallos de transacción.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      security:
+        - BearerAuth: [] # Usado por el Lambda Orquestador
+      responses:
+        '200': { description: Orden cancelada y stock restaurado. [cite_start]}
+        '400': { description: No se puede cancelar la orden. }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

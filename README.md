@@ -108,3 +108,13 @@ La Orders API es responsable de gestionar esta compensación, asegurando que el 
 3. __Manejo de Errores__
 
 El Lambda Orquestador está diseñado para propagar errores detallados. En caso de que la Orders API o Customers API devuelvan un error 4XX (ej. Stock insuficiente), el Orquestador extrae el mensaje de error del cuerpo (error.response.data.message o .error) y lo retransmite al cliente final.
+
+4. __Documentación y Especificación (OpenAPI 3.0)__ 
+
+Para facilitar la integración y la comprensión del endpoint de cada microservicio, se ha provisto la documentación siguiendo la especificación OpenAPI 3.02.
+
+Servicio | Archivo de Especificación | Propósito |
+--- | --- | --- | 
+ Orders API | orders-api/openapi.yaml | Describe el ciclo de vida de la orden (POST /orders, /confirm, /cancel) y la gestión de productos, incluyendo los headers de idempotencia.
+ Customers API | customers-api/openapi.yaml | Define la gestión de clientes y el endpoint interno (/internal/customers/:id) usado por la Orders API para la validación.
+ ---

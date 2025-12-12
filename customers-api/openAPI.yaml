@@ -1,0 +1,72 @@
+openapi: 3.0.0
+info:
+  title: Customers API
+  version: 1.0.0
+  description: API para la gestión de clientes (Customers) y validación interna de identidad.
+servers:
+  - [cite_start]url: http://localhost:3001 
+
+paths:
+  /customers:
+    post:
+      summary: Crear nuevo cliente
+      description: Crea un nuevo registro de cliente.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+              properties:
+                name: { type: string, example: "ACME Corp" }
+                [cite_start]email: { type: string, format: email, example: "contacto@acme.com" }
+                [cite_start]phone: { type: string, example: "555-1234" }
+      responses:
+        '201': { description: Cliente creado. }
+        '400': { description: Datos inválidos. }
+        '409': { description: Email ya registrado (conflicto). }
+
+  /customers/{id}:
+    get:
+      summary: Obtener detalle de cliente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      security:
+        - BearerAuth: []
+      responses:
+        '200': { description: Detalle del cliente. [cite_start]}
+        '404': { description: Cliente no encontrado. }
+
+  /internal/customers/{id}:
+    get:
+      summary: Validar y obtener cliente (Uso interno)
+      description: Usado por Orders API para validar la existencia del cliente antes de crear una orden.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      security:
+        - [cite_start]BearerServiceToken: []
+      responses:
+        '200': { description: Cliente encontrado y validado. }
+        '404': { description: Cliente no encontrado. }
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    BearerServiceToken:
+      type: http
+      scheme: bearer
+      description: Token de servicio para comunicación entre microservicios.
